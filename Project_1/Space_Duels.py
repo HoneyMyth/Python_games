@@ -8,6 +8,8 @@ if pygame.get_init == False:
     quit()
 
 w, h = pygame.display.get_desktop_sizes()[0]
+w = 3*w/4
+h = 3*h/4
 
 display_surface = pygame.display.set_mode((w, h)) #used to create surface of code
 pygame.display.set_caption("Star Duels")
@@ -32,34 +34,47 @@ for i in range(21):
             coordinates.append((random_w,random_h))
 
 
-scaler_x = 1
-scaler_y = 1
+
+player_direction = pygame.math.Vector2(0,0)
+player_speed = 1
 
 while True:
 
-    clock.tick(24)
+    dt = clock.tick(60)
+
+    if dt>= 100:
+        dt = 100
+
+    keys = pygame.key.get_pressed()
+    player_direction.x = int(keys[pygame.K_LEFT]) - int(keys[pygame.K_RIGHT])
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        if event.type == pygame.KEYDOWN:
+            print("keydown")
     
     display_surface.fill("darkgray")
     
-    for i in range(21):
-        for j in coordinates:
-            display_surface.blit(star_surface,(j[0], j[1]))
+    for coordinate in coordinates:
+        display_surface.blit(star_surface, coordinate)
     
     display_surface.blit(player_surface,player_frect)
     display_surface.blit(laser_surface,laser_frect)
     
-    player_frect.left += scaler_x*2
-    if player_frect.right>= w or player_frect.left<= 0:
-        scaler_x = scaler_x*-1
-        
-    player_frect.top += scaler_y*2
-    if player_frect.top <= 0 or player_frect.bottom >= h:
-        scaler_y = scaler_y*-1
+    player_frect.center += player_direction * player_speed * dt
+    
 
+    #Bouncing of ship
+    if player_frect.right>=w or player_frect.left<=0:
+        player_direction.x *= -1
+
+    if player_frect.top<=0 or player_frect.bottom>=h:
+        player_direction.y *= -1
+
+    
+    
 
     pygame.display.update()    
