@@ -36,6 +36,7 @@ for i in range(21):
 
 
 player_direction = pygame.math.Vector2(0,0)
+laser_direction = pygame.math.Vector2(0,0)
 player_speed = 1
 
 while True:
@@ -46,15 +47,24 @@ while True:
         dt = 100
 
     keys = pygame.key.get_pressed()
-    player_direction.x = int(keys[pygame.K_LEFT]) - int(keys[pygame.K_RIGHT])
+    player_direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+    player_direction.y = int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP])
+    
+    switch = 0
+    if int(keys[pygame.K_SPACE]):
+        switch = 1
+    
+    if switch == 1:
+        laser_direction.y = -1
+    
 
+    if player_direction.magnitude() > 1:
+        player_direction = player_direction/player_direction.magnitude()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-        if event.type == pygame.KEYDOWN:
-            print("keydown")
     
     display_surface.fill("darkgray")
     
@@ -65,14 +75,9 @@ while True:
     display_surface.blit(laser_surface,laser_frect)
     
     player_frect.center += player_direction * player_speed * dt
+    laser_frect.center += laser_direction*dt
     
 
-    #Bouncing of ship
-    if player_frect.right>=w or player_frect.left<=0:
-        player_direction.x *= -1
-
-    if player_frect.top<=0 or player_frect.bottom>=h:
-        player_direction.y *= -1
 
     
     
