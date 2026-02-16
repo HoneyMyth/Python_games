@@ -24,7 +24,10 @@ player_frect = player_surface.get_frect(center = (w/2,h/2))
 star_surface = pygame.image.load(path_star).convert_alpha()
 path_laser = join("..", "space_shooter" , "images" , "laser.png")
 laser_surface = pygame.image.load(path_laser).convert_alpha()
-laser_frect = laser_surface.get_frect(center = ((w/2),(h/2) - 37.5 - 17))
+laser_frect = laser_surface.get_frect(center = (-100 , -100))
+path_meteor = join(".." , "space_shooter" , "images" , "meteor.png")
+meteor_surface = pygame.image.load(path_meteor).convert_alpha()
+meteor_frect = meteor_surface.get_frect(center =  (w/2,h/2))
 ############
 
 coordinates = []
@@ -37,49 +40,60 @@ for i in range(21):
 
 player_direction = pygame.math.Vector2(0,0)
 laser_direction = pygame.math.Vector2(0,0)
-player_speed = 1
+player_speed_multiplier = 1
+laser_speed_multiplier = 1
+
+temp_laser_coordinates = (-100,-100)
 
 while True:
 
-    dt = clock.tick(60)
-
-    if dt>= 100:
-        dt = 100
-
-    keys = pygame.key.get_pressed()
-    player_direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
-    player_direction.y = int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP])
-    
-    switch = 0
-    if int(keys[pygame.K_SPACE]):
-        switch = 1
-    
-    if switch == 1:
-        laser_direction.y = -1
-    
-
-    if player_direction.magnitude() > 1:
-        player_direction = player_direction/player_direction.magnitude()
-
+    #Event loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+
+    #Fps
+    dt = clock.tick(60)
+
+    if dt >= 100:
+        dt = 100
+
+    #Key press
+    keys = pygame.key.get_pressed()
+    player_direction.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+    player_direction.y = int(keys[pygame.K_DOWN]) - int(keys[pygame.K_UP])
+
+    if int(keys[pygame.K_SPACE]):
+        laser_direction.y = -1
+        laser_frect.center = player_frect.center
+
+    #Logic
+    if player_direction.magnitude() > 1:
+        player_direction = player_direction/player_direction.magnitude()
+
+    if laser_frect.y >= meteor_frect.top:
+        print("Hit")
+
+    player_frect.center += player_direction * player_speed_multiplier * dt
+    laser_frect.center += laser_direction * laser_speed_multiplier * dt
     
+    
+    #Display
     display_surface.fill("darkgray")
     
     for coordinate in coordinates:
         display_surface.blit(star_surface, coordinate)
     
-    display_surface.blit(player_surface,player_frect)
     display_surface.blit(laser_surface,laser_frect)
+    display_surface.blit(player_surface,player_frect)
+    display_surface.blit(meteor_surface,meteor_frect)
     
-    player_frect.center += player_direction * player_speed * dt
-    laser_frect.center += laser_direction*dt
+    
     
 
 
     
-    
+
 
     pygame.display.update()    
