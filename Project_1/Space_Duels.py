@@ -17,7 +17,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(all_sprites)
         self.image = pygame.image.load(join("..","space_shooter" , "images" , "player.png" )).convert_alpha()
         self.rect = self.image.get_frect(center = (width/2,height/2))
-        self.hitbox = self.rect.inflate(-70, -70) 
+        self.mask = pygame.mask.from_surface(self.image)
         self.all_sprites = all_sprites
 
         self.player_speed_multiplier = 1
@@ -25,7 +25,6 @@ class Player(pygame.sprite.Sprite):
         self.shoot_time = 0
         self.cool_down = 500
         
-
     def movement(self, dt ):
         keys = pygame.key.get_pressed()
 
@@ -38,7 +37,6 @@ class Player(pygame.sprite.Sprite):
             player_direction = player_direction/player_direction.magnitude()
 
         self.rect.center += player_direction * self.player_speed_multiplier * dt
-        self.hitbox.center = self.rect.center 
     
     def cooldown_check(self):
         if self.can_shoot == False:
@@ -52,12 +50,13 @@ class Player(pygame.sprite.Sprite):
         if int(keys_just_pressed[pygame.K_SPACE]) and self.can_shoot:
             self.can_shoot = False
             self.shoot_time = pygame.time.get_ticks()
-            laser = Laser(self.all_sprites,laser_sprites,image_laser,self.hitbox.midbottom)
+            laser = Laser(self.all_sprites,laser_sprites,image_laser,self.rect.midbottom)
 
 class Stars(pygame.sprite.Sprite):
     def __init__(self,groups,width,height):
         super().__init__(groups)
         self.image = pygame.image.load(join(".." , "space_shooter" , "images" , "star.png")).convert_alpha()
+        self.mask = pygame.mask.from_surface(self.image)
 
         random_w = random.randint(0,round(w))
         random_h = random.randint(0,round(h))
@@ -81,6 +80,7 @@ class Meteor(pygame.sprite.Sprite):
         super().__init__(all_sprites,meteor_sprites)
         self.image = image
         self.rect = image.get_frect(center = (random.randint(0,round(w)),0))
+        self.mask = pygame.mask.from_surface(self.image)
         self.meteor_speed = .25
         self.direction = pygame.Vector2(random.uniform(-.5,.5),1)
 
@@ -132,21 +132,15 @@ while True:
     all_sprites.update(dt)
 
     for laser in laser_sprites:
-        for meteor in meteor_sprites:
-            if laser.rect.colliderect(meteor.rect):
-                laser.kill()
-                meteor.kill()
-                points += 1
+        if pygame.sprite.spritecollide(laser,meteor_sprites,True,pygame.sprite.collide_mask):
+            laser.kill()
     
-    for meteor in meteor_sprites:
-        if player.rect.colliderect(meteor.rect):
-                player.kill()
-                print(points)
-                pygame.time.wait(1000)
-                exit()
+    for meteors in meteor_sprites:
+        if pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask):
+            pygame.time.wait(1000)
+            exit()
 
-
-
+    
     #Display
     display_surface.fill("darkgray")
     all_sprites.draw(display_surface)
