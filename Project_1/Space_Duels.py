@@ -1,7 +1,7 @@
 from os.path import join
 import pygame
 import random
-
+import csv
 
 pygame.init()
 
@@ -140,8 +140,21 @@ while True:
         if pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask):
             pygame.time.wait(1000)
             print(points)
+            
+            temp_store = 0
+            with open("High_Score.csv" , mode = "r", newline= "") as file:
+                reader = list(csv.reader(file))
+                for line in reader:
+                    temp_store = line[0]
+                        
+            
+            if int(temp_store) < points:
+                print("NEW HIGH SCORE")
+                with open("High_Score.csv" , mode = "w" , newline = "") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([points])
+                
             exit()
-
     
     #Display
     display_surface.fill("darkgray")
