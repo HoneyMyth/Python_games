@@ -134,10 +134,12 @@ while True:
     for laser in laser_sprites:
         if pygame.sprite.spritecollide(laser,meteor_sprites,True,pygame.sprite.collide_mask):
             laser.kill()
+            points += 1
     
     for meteors in meteor_sprites:
         if pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask):
             pygame.time.wait(1000)
+            print(points)
             exit()
 
     
