@@ -4,7 +4,7 @@ import random
 import csv
 
 
-def game():
+def game(tracked_death_time):
     pygame.init()
 
     w, h = pygame.display.get_desktop_sizes()[0]
@@ -76,6 +76,7 @@ def game():
                 self.kill()
 
     class Meteor(pygame.sprite.Sprite):
+
         def __init__(self,all_sprites,meteor_sprites,image,w,h):
             super().__init__(all_sprites,meteor_sprites)
             self.image = image
@@ -88,25 +89,80 @@ def game():
             self.rect.center += self.direction * dt * self.meteor_speed
             if self.rect.top > h:
                 self.kill()
+
+    def collisions():
+        for laser in laser_sprites:
+            if pygame.sprite.spritecollide(laser,meteor_sprites,True,pygame.sprite.collide_mask):
+                laser.kill()
+                nonlocal points 
+                points += 1
+
+        if pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask):
             
+            nonlocal death_switch
+            death_switch = 1
 
+    def death_score_display():
+        nonlocal death_switch
+        if death_switch == 1:
+            overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 150))
+            display_surface.blit(overlay, (0, 0))
+            font = pygame.font.Font(ttf_file,30).render(f"WASTED",True,"white")
+            display_surface.blit(font,(w/2-60,h/2))
 
+            pygame.display.update()
+            
+            pygame.time.wait(2000)
+
+            print(points)
+
+            temp_store = 0
+
+            with open("High_Score.csv" , mode = "r", newline= "") as file:
+                reader = list(csv.reader(file))
+                for line in reader:
+                    temp_store = line[0]
+                            
+                
+            if int(temp_store) < points:
+                print("NEW HIGH SCORE")
+                with open("High_Score.csv" , mode = "w" , newline = "") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([points])
+
+            return True
+        else:
+            return False
+    
+    def time_display():
+        nonlocal ttf_file
+        font = pygame.font.Font(ttf_file,30)
+        text_surf = font.render(f"{(pygame.time.get_ticks()/1000 - tracked_death_time/1000):.2f}",True,"white")
+        text_rect = text_surf.get_frect(midbottom = (w/2,h-30))
+        display_surface.blit(text_surf,text_rect)
+        pygame.draw.rect(display_surface,"white",text_rect.inflate(15,5).move(0,-5), 5,5)
     ############
     meteor_surface = pygame.image.load(join(".." , "space_shooter" , "images" , "meteor.png")).convert_alpha()
     image_laser = pygame.image.load(join("..", "space_shooter" , "images" , "laser.png")).convert_alpha()
+    ttf_file = join("..", "space_shooter" , "images" , "Oxanium-Bold.ttf")
     ############
 
     meteor_sprites = pygame.sprite.Group()
     laser_sprites = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
-    for i in range(21):
+
+    for _ in range(21):
         Stars(all_sprites,w,h)
     player = Player(all_sprites,w,h)
-    clock = pygame.time.Clock()
 
+    clock = pygame.time.Clock()
     meteor_event = pygame.event.custom_type()
     pygame.time.set_timer(meteor_event,750)
 
+
+    death_switch = 0
+    
     while True:
 
         #Event loop
@@ -129,38 +185,18 @@ def game():
         player.cooldown_check()
         all_sprites.update(dt)
 
-        for laser in laser_sprites:
-            if pygame.sprite.spritecollide(laser,meteor_sprites,True,pygame.sprite.collide_mask):
-                laser.kill()
-                points += 1
-
-        if pygame.sprite.spritecollide(player,meteor_sprites,True,pygame.sprite.collide_mask):
-
-            pygame.time.wait(1000)
-
-            print(points)
-
-            temp_store = 0
-
-            with open("High_Score.csv" , mode = "r", newline= "") as file:
-                reader = list(csv.reader(file))
-                for line in reader:
-                    temp_store = line[0]
-                            
-                
-            if int(temp_store) < points:
-                print("NEW HIGH SCORE")
-                with open("High_Score.csv" , mode = "w" , newline = "") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([points])
-                    
-            return
-        
+        collisions()
+        if death_score_display():
+            tracked_death_time = pygame.time.get_ticks()
+            return tracked_death_time
+    
         #Display
-        display_surface.fill("darkgray")
+        display_surface.fill("#3a2e3f")
         all_sprites.draw(display_surface)
-
+        time_display()
         pygame.display.update()    
 
-while True:
-    game()
+if __name__ == "__main__":
+    tracked_death_time = 0 
+    while True:
+        tracked_death_time = game(tracked_death_time)
